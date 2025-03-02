@@ -1,0 +1,47 @@
+services:
+  wings:
+    container_name: wings
+    image: ghcr.io/loki-101/cwings:latest
+    restart: unless-stopped
+
+    tty: true
+    networks:
+      - wings
+      - traefik
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.http.routers.wings.rule=Host(`${WINGS_SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.services.wings.loadbalancer.server.port=8080"
+      - "traefik.http.routers.wings.entrypoints=https"
+      - "traefik.http.routers.wings.tls=true"
+      - "traefik.http.routers.wings.tls.certresolver=cloudflare"
+
+      - "traefik.tcp.routers.wings_sftp.entrypoints=wings_sftp"
+      - "traefik.tcp.routers.wings_sftp.rule=HostSNI(`*`)"
+      - "traefik.tcp.services.wings_sftp.loadbalancer.server.port=2022"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/var/lib/docker/containers/:/var/lib/docker/containers/"
+      - "./services/wings/data:/etc/pterodactyl"
+      - "./services/wings/data/pterodactyl:/srv/pterodactyl"
+      - "./services/wings/logs/:/var/log/pterodactyl/"
+      - "/tmp/pterodactyl/:/tmp/pterodactyl/"
+    environment:
+      TZ: "${WINGS_TIMEZONE}"
+      WINGS_UID: 988
+      WINGS_GID: 988
+      WINGS_USERNAME: pterodactyl
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  wings:
+    name: wings
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: wings

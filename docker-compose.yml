@@ -1,0 +1,6 @@
+networks:
+  traefik:
+    name: traefik 
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: traefik

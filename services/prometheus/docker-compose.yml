@@ -1,0 +1,46 @@
+services:
+  prometheus:
+    container_name: prometheus
+    restart: unless-stopped
+    image: prom/prometheus:latest
+
+    labels:
+      - "traefik.enable=false"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    volumes:
+      - ./services/prometheus/data/config.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - traefik
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9090"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  mysql_exporter:
+    container_name: mysql_exporter
+    restart: unless-stopped
+    image: prom/mysqld-exporter
+
+    depends_on:
+      - mysql
+    command:
+     - "--mysqld.username=exporter:${EXPORTER_MYSQL_PASSWORD}"
+     - "--mysqld.address=mysql:3306"
+    networks:
+      - traefik
+
+  redis_exporter:
+    container_name: redis_exporter
+    restart: unless-stopped
+    image: oliver006/redis_exporter
+
+    depends_on:
+      - redis
+    command:
+     - "--redis.addr=redis://redis:6379"
+     - "--redis.password=${REDIS_PASSWORD}"
+    networks:
+      - traefik

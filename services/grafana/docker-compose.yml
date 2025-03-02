@@ -1,0 +1,36 @@
+services:
+  grafana:
+    container_name: grafana
+    restart: unless-stopped
+    image: grafana/grafana:latest
+
+    depends_on:
+      - prometheus
+      - mysql
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD} 
+      - GF_DATABASE_TYPE=mysql
+      - GF_DATABASE_HOST=mysql:3306
+      - GF_DATABASE_NAME=grafana
+      - GF_DATABASE_USER=grafana
+      - GF_DATABASE_PASSWORD=${GRAFANA_MYSQL_PASSWORD}
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.http.routers.grafana.rule=Host(`${GRAFANA_SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+      - "traefik.http.routers.grafana.entrypoints=https"
+      - "traefik.http.routers.grafana.tls=true"
+      - "traefik.http.routers.grafana.tls.certresolver=cloudflare"
+    volumes:
+      - ./services/grafana/data:/var/lib/grafana
+      - ./services/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - traefik
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

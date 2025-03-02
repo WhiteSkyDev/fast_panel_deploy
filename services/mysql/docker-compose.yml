@@ -1,0 +1,29 @@
+services:
+  mysql:
+    container_name: mysql
+    restart: unless-stopped
+    build: 
+      context: services/mysql
+      dockerfile: Dockerfile
+
+    networks:
+      - traefik
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
+      - PANEL_MYSQL_PASSWORD=${PANEL_MYSQL_PASSWORD}
+      - EXPORTER_MYSQL_PASSWORD=${EXPORTER_MYSQL_PASSWORD}
+      - GRAFANA_MYSQL_PASSWORD=${GRAFANA_MYSQL_PASSWORD}
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.tcp.routers.mysql.entrypoints=mysql"
+      - "traefik.tcp.routers.mysql.rule=HostSNI(`*`)"
+      - "traefik.tcp.services.mysql.loadbalancer.server.port=3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p$MYSQL_PASSWORD"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - ./services/mysql/data:/var/lib/mysql
