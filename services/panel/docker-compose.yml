@@ -35,8 +35,8 @@ services:
       HASHIDS_SALT: "${PANEL_HASH}"
       HASHIDS_LENGTH: "${PANEL_HASH_LENGTH}"
 
-      MAIL_FROM: "no-reply${DOMAIN}"
-      MAIL_FROM_NAME: "no-reply${DOMAIN}"
+      MAIL_FROM: "no-reply@${DOMAIN}"
+      MAIL_FROM_NAME: "no-reply@${DOMAIN}"
       MAIL_DRIVER: "${PANEL_MAIL_DRIVER}"
       MAIL_HOST: "${PANEL_SMTP_SERVER}"
       MAIL_PORT: "${PANEL_SMTP_PORT}"
