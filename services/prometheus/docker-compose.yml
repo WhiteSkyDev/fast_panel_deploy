@@ -44,3 +44,17 @@ services:
      - "--redis.password=${REDIS_PASSWORD}"
     networks:
       - traefik
+
+  node_exporter:
+    container_name: node_exporter
+    restart: unless-stopped
+    image: quay.io/prometheus/node-exporter:latest
+
+    command:
+      - '-–collector.processes'
+      - '–-collector.systemd'
+      - '--path.rootfs=/host'
+    network_mode: host
+    pid: host
+    volumes:
+      - '/:/host:ro,rslave'
