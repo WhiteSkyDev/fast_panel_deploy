@@ -24,10 +24,10 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "/var/lib/docker/containers/:/var/lib/docker/containers/"
       - "./services/wings/config:/etc/pterodactyl"
-      - "./services/wings/data:/srv/pterodactyl"
-      - "./services/wings/lib:/var/lib/pterodactyl"
-      - "./services/wings/logs:/var/log/pterodactyl"
-      - "./services/wings/tmp:/tmp/pterodactyl"
+      - "/srv/pterodactyl:/srv/pterodactyl"
+      - "/var/lib/pterodactyl:/var/lib/pterodactyl"
+      - "/var/log/pterodactyl:/var/log/pterodactyl"
+      - "/tmp/pterodactyl:/tmp/pterodactyl"
     environment:
       TZ: "${WINGS_TIMEZONE}"
       WINGS_UID: 988
