@@ -51,10 +51,9 @@ services:
     image: quay.io/prometheus/node-exporter:latest
 
     command:
-      - '-–collector.processes'
-      - '–-collector.systemd'
       - '--path.rootfs=/host'
-    network_mode: host
+    networks:
+      - traefik
     pid: host
     volumes:
       - '/:/host:ro,rslave'
