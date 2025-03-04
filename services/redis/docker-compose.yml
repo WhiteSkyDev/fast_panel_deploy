@@ -15,7 +15,7 @@ services:
       - "traefik.tcp.services.redis.loadbalancer.server.port=6379"
     entrypoint: redis-server --requirepass ${REDIS_PASSWORD}   
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli", "ping", "||" , "1"]
       interval: 30s
       timeout: 10s
       retries: 3

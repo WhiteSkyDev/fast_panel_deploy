@@ -14,7 +14,6 @@ services:
       - "443:443"                                # HTTPS
       - "3306:3306"                              # MySQL
       - "6379:6379"                              # Redis
-      - "8080:8080"
       - "${WINGS_SFTP_PORT}:${WINGS_SFTP_PORT}"
     environment:
       - CF_DNS_API_TOKEN=${CLOUDFLARE_API_KEY}
@@ -74,7 +73,4 @@ services:
 
       - "--experimental.plugins.cloudflarewarp.modulename=github.com/BetterCorp/cloudflarewarp"
       - "--experimental.plugins.cloudflarewarp.version=v1.3.3"
-
-      - "--api.insecure=true"
-      - "--api.dashboard=true"
       
