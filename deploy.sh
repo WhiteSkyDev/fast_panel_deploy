@@ -113,11 +113,11 @@ install_docker() {
 
 main() {
     log_info "CPU count: $(grep -c ^processor /proc/cpuinfo)"
-    echo "CPU frequency: $(grep "MHz" /proc/cpuinfo | head -n 1 | awk '{print $4}') MHz"
-    echo "RAM: $(($(grep MemTotal /proc/meminfo | awk '{print $2}') / 1024)) MB"
-    echo "RAM using:"
+    log_info "CPU frequency: $(grep "MHz" /proc/cpuinfo | head -n 1 | awk '{print $4}') MHz"
+    log_info "RAM: $(($(grep MemTotal /proc/meminfo | awk '{print $2}') / 1024)) MB"
+    log_info "RAM using:"
     free -m
-    echo "Disk usage:"
+    log_info "Disk usage:"
     df -h /
 
     update_packages

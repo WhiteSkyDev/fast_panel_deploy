@@ -1,22 +1,11 @@
 services:
   panel:
+    image: ghcr.io/blueprintframework/blueprint:latest
     container_name: panel
     restart: unless-stopped
-    image: ghcr.io/blueprintframework/blueprint:latest
-
-    networks:
-      - traefik
     depends_on:
       - mysql
       - redis
-    labels:
-      - "traefik.enable=true"
-
-      - "traefik.http.routers.panel.rule=Host(`${PANEL_SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.services.panel.loadbalancer.server.port=80"
-      - "traefik.http.routers.panel.entrypoints=https"
-      - "traefik.http.routers.panel.tls=true"
-      - "traefik.http.routers.panel.tls.certresolver=cloudflare"
     volumes:
       - "./services/panel/var/:/app/var/"
       - "./services/panel/nginx/:/etc/nginx/http.d/"
@@ -24,6 +13,8 @@ services:
       - "./services/panel/nginx/logs:/var/log/nginx"
       - "./services/panel/extensions/:/blueprint_extensions"
       - "panel_app:/app"
+    networks:
+      - traefik
     environment:
       APP_URL: "https://${PANEL_SUBDOMAIN}.${DOMAIN}"
       APP_NAME: "${PANEL_APP_NAME}"
@@ -31,10 +22,10 @@ services:
       APP_SERVICE_AUTHOR: "${PANEL_SERVICE_AUTHOR}"
       APP_ENV: "${PANEL_APP_ENV}"
       APP_ENVIRONMENT_ONLY: "false"
-
+  
       HASHIDS_SALT: "${PANEL_HASH}"
       HASHIDS_LENGTH: "${PANEL_HASH_LENGTH}"
-
+  
       MAIL_FROM: "no-reply@${DOMAIN}"
       MAIL_FROM_NAME: "no-reply@${DOMAIN}"
       MAIL_DRIVER: "${PANEL_MAIL_DRIVER}"
@@ -44,7 +35,7 @@ services:
       MAIL_PASSWORD: "${PANEL_SMTP_PASSWORD}"
       MAIL_ENCRYPTION: "${PANEL_SMTP_ENCRYPTION}"
       MAIL_EHLO_DOMAIN: "no-reply@${DOMAIN}"
-
+  
       RECAPTCHA_ENABLED: "${PANEL_RECAPTCHA_ENABLED}"
       RECAPTCHA_WEBSITE_KEY: "${PANEL_RECAPTCHA_SITE_KEY}"
       RECAPTCHA_SECRET_KEY: "${PANEL_RECAPTCHA_SECRET_KEY}"
@@ -52,18 +43,33 @@ services:
       PTERODACTYL_CLIENT_ALLOCATIONS_ENABLED: "${PANEL_AUTO_ALLOCATION}"
       PTERODACTYL_CLIENT_ALLOCATIONS_RANGE_START: "${PANEL_AUTO_ALLOCATION_START_PORT}"
       PTERODACTYL_CLIENT_ALLOCATIONS_RANGE_END: "${PANEL_AUTO_ALLOCATION_END_PORT}"
-
+  
       CACHE_DRIVER: "redis"
       SESSION_DRIVER: "redis"
       QUEUE_DRIVER: "redis"
-
+  
       DB_HOST: "mysql"
       DB_PASSWORD: ${PANEL_MYSQL_PASSWORD}
       DB_PORT: "3306"
       DB_DATABASE: "panel"
-
+  
       REDIS_HOST: "redis"
       REDIS_PASSWORD: "${REDIS_PASSWORD}"
+    labels:
+      - "traefik.enable=true"
+
+      # Redirect http to https
+      - "traefik.http.routers.panel-http.rule=Host(`${PANEL_SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.panel-http.entrypoints=http"
+      - "traefik.http.routers.panel-http.middlewares=redirect-to-https"
+      # Https handler
+      - "traefik.http.routers.panel-https.rule=Host(`${PANEL_SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.panel-https.entrypoints=https"
+      - "traefik.http.routers.panel-https.middlewares=circuit-breaker"
+      - "traefik.http.routers.panel-https.tls=true"
+      - "traefik.http.routers.panel-https.tls.certresolver=cloudflare"
+
+      - "traefik.http.services.panel.loadbalancer.server.port=80"
     healthcheck:
       test: ["CMD", "curl", "http://localhost:80"]
       interval: 30s

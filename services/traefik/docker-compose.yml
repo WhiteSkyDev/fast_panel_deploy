@@ -1,11 +1,45 @@
 services:
   traefik:
+    image: traefik:latest
     container_name: traefik
     restart: unless-stopped
-    image: traefik:latest
-
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./services/traefik/lets_encrypt:/lets_encrypt"
+      - "./services/traefik/logs:/logs"
     networks:
       - traefik
+    ports:
+      - "80:80"                                  # HTTP
+      - "443:443"                                # HTTPS
+      - "3306:3306"                              # MySQL
+      - "6379:6379"                              # Redis
+      - "8080:8080"
+      - "${WINGS_SFTP_PORT}:${WINGS_SFTP_PORT}"
+    environment:
+      - CF_DNS_API_TOKEN=${CLOUDFLARE_API_KEY}
+      - TZ=${TRAEFIK_TIMEZONE}
+    labels:
+      - "traefik.http.middlewares.circuit-breaker.circuitbreaker.expression=NetworkErrorRatio() > 0.10 || ResponseCodeRatio(500, 599, 0, 599) > 0.20 || LatencyAtQuantileMS(90.0) > 300"
+
+      - "traefik.http.middlewares.redirect-play-subdomain-middleware.redirectregex.regex=^https://${PLAY_SUBDOMAIN}.${DOMAIN}/(.*)"
+      - "traefik.http.middlewares.redirect-play-subdomain-middleware.redirectregex.replacement=https://${DOMAIN}/"
+      - "traefik.http.middlewares.redirect-play-subdomain-middleware.redirectregex.permanent=true"
+  
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
+  
+      # Redirect http to https (redirect play subdomain)
+      - "traefik.http.routers.redirect-play-subdomain-http.rule=Host(`${PLAY_SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.redirect-play-subdomain-http.entrypoints=http"
+      - "traefik.http.routers.redirect-play-subdomain-http.middlewares=redirect-to-https"
+      # Https handler
+      - "traefik.http.routers.redirect-play-subdomain-https.rule=Host(`${PLAY_SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.redirect-play-subdomain-https.entrypoints=https"
+      - "traefik.http.routers.redirect-play-subdomain-https.middlewares=redirect-play-subdomain-middleware"
+      - "traefik.http.routers.redirect-play-subdomain-https.service=noop@internal"
+      - "traefik.http.routers.redirect-play-subdomain-https.tls=true"
+      - "traefik.http.routers.redirect-play-subdomain-https.tls.certresolver=cloudflare"  
     command:
       - "--entrypoints.http.address=:80"           # HTTP
       - "--entrypoints.https.address=:443"         # HTTPS
@@ -30,7 +64,6 @@ services:
       - "--accesslog.fields.names.RequestCount=true"
       - "--accesslog.fields.names.ResponseTime=true"
 
-      - "--log.filepath=/logs/traefik.log"
       - "--log.format=common" 
       - "--log.level=${TRAEFIK_LOG_LEVEL}"
 
@@ -38,36 +71,10 @@ services:
 
       - "--metrics.prometheus=true"
       - "--metrics.prometheus.entrypoint=prometheus"
-    labels:
-      - "traefik.http.middlewares.redirect-play-subdomain-middleware.redirectregex.regex=^https://${PLAY_SUBDOMAIN}.${DOMAIN}/(.*)"
-      - "traefik.http.middlewares.redirect-play-subdomain-middleware.redirectregex.replacement=https://${DOMAIN}/"
-      - "traefik.http.middlewares.redirect-play-subdomain-middleware.redirectregex.permanent=true"
 
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
+      - "--experimental.plugins.cloudflarewarp.modulename=github.com/BetterCorp/cloudflarewarp"
+      - "--experimental.plugins.cloudflarewarp.version=v1.3.3"
 
-      - "traefik.http.routers.redirect-play-subdomain.rule=Host(`${PLAY_SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.redirect-play-subdomain.entrypoints=https"
-      - "traefik.http.routers.redirect-play-subdomain.middlewares=redirect-to-https,redirect-play-subdomain-middleware"
-      - "traefik.http.routers.redirect-play-subdomain.service=noop@internal"
-      - "traefik.http.routers.redirect-play-subdomain.tls=true"
-      - "traefik.http.routers.redirect-play-subdomain.tls.certresolver=cloudflare"
-
-      - "traefik.http.routers.redirect-to-https.rule=HostRegexp(`{host:.+}`)"
-      - "traefik.http.routers.redirect-to-https.entrypoints=http"
-      - "traefik.http.routers.redirect-to-https.middlewares=redirect-to-https"
-      - "traefik.http.routers.redirect-to-https.service=noop@internal"
-      - "traefik.http.routers.redirect-to-https.tls=false"
-    environment:
-      - CF_DNS_API_TOKEN=${CLOUDFLARE_API_KEY}
-      - TZ=${TRAEFIK_TIMEZONE}
-    ports:
-      - "80:80"                                  # HTTP
-      - "443:443"                                # HTTPS
-      - "3306:3306"                              # MySQL
-      - "6379:6379"                              # Redis
-      - "${WINGS_SFTP_PORT}:${WINGS_SFTP_PORT}"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-      - "./services/traefik/lets_encrypt:/lets_encrypt"
-      - "./services/traefik/logs:/logs"
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      

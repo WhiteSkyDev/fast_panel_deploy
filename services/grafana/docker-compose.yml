@@ -1,12 +1,16 @@
 services:
   grafana:
+    image: grafana/grafana:latest
     container_name: grafana
     restart: unless-stopped
-    image: grafana/grafana:latest
-
     depends_on:
       - prometheus
       - mysql
+    volumes:
+      - ./services/grafana/data:/var/lib/grafana
+      - ./services/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - traefik
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD} 
@@ -18,16 +22,18 @@ services:
     labels:
       - "traefik.enable=true"
 
-      - "traefik.http.routers.grafana.rule=Host(`${GRAFANA_SUBDOMAIN}.${DOMAIN}`)"
+      # Redirect http to https
+      - "traefik.http.routers.grafana-http.rule=Host(`${GRAFANA_SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.grafana-http.entrypoints=http"
+      - "traefik.http.routers.grafana-http.middlewares=redirect-to-https"
+      # Https handler
+      - "traefik.http.routers.grafana-https.rule=Host(`${GRAFANA_SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.grafana-https.entrypoints=https"
+      - "traefik.http.routers.grafana-https.middlewares=circuit-breaker"
+      - "traefik.http.routers.grafana-https.tls=true"
+      - "traefik.http.routers.grafana-https.tls.certresolver=cloudflare"
+
       - "traefik.http.services.grafana.loadbalancer.server.port=3000"
-      - "traefik.http.routers.grafana.entrypoints=https"
-      - "traefik.http.routers.grafana.tls=true"
-      - "traefik.http.routers.grafana.tls.certresolver=cloudflare"
-    volumes:
-      - ./services/grafana/data:/var/lib/grafana
-      - ./services/grafana/provisioning:/etc/grafana/provisioning
-    networks:
-      - traefik
     healthcheck:
       test: ["CMD", "curl", "http://localhost:3000/api/health"]
       interval: 30s

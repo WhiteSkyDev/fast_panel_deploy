@@ -1,11 +1,12 @@
 services:
   mysql:
-    container_name: mysql
-    restart: unless-stopped
     build: 
       context: services/mysql
       dockerfile: Dockerfile
-
+    container_name: mysql
+    restart: unless-stopped
+    volumes:
+      - ./services/mysql/data:/var/lib/mysql
     networks:
       - traefik
     environment:
@@ -25,5 +26,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    volumes:
-      - ./services/mysql/data:/var/lib/mysql

@@ -1,11 +1,12 @@
 services:
   watchtower:
+    image: containrrr/watchtower:latest
     container_name: watchtower
     restart: unless-stopped
-    image: containrrr/watchtower:latest
 
-    command: --interval ${WATCHTOWER_DELAY}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     labels:
       - "traefik.enable=false"
+    command: --interval ${WATCHTOWER_DELAY}
+    

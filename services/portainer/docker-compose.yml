@@ -1,19 +1,29 @@
 services:
   portainer:
+    build: 
+      context: services/portainer
+      dockerfile: Dockerfile
     container_name: portainer
     restart: unless-stopped
-    image: portainer/portainer-ce:lts
-
-    labels:
-      - "traefik.enable=true"
-
-      - "traefik.http.routers.portainer.rule=Host(`${PORTAINER_SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
-      - "traefik.http.routers.portainer.entrypoints=https"
-      - "traefik.http.routers.portainer.tls=true"
-      - "traefik.http.routers.portainer.tls.certresolver=cloudflare"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "./services/portainer/data:/data"
     networks:
       - traefik
+    environment:
+      - HEALTHCHECK_PORT=9000
+    labels:
+      - "traefik.enable=true"
+
+      # Redirect http to https
+      - "traefik.http.routers.portainer-http.rule=Host(`${PORTAINER_SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.portainer-http.entrypoints=http"
+      - "traefik.http.routers.portainer-http.middlewares=redirect-to-https"
+      # Https handler
+      - "traefik.http.routers.portainer-https.rule=Host(`${PORTAINER_SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.portainer-https.entrypoints=https"
+      - "traefik.http.routers.portainer-https.middlewares=circuit-breaker"
+      - "traefik.http.routers.portainer-https.tls=true"
+      - "traefik.http.routers.portainer-https.tls.certresolver=cloudflare"
+
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
