@@ -3,6 +3,8 @@ services:
     image: ghcr.io/loki-101/cwings:latest
     container_name: wings
     restart: unless-stopped
+    depends_on:
+      - panel
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "/var/lib/docker/containers/:/var/lib/docker/containers/"
@@ -12,7 +14,10 @@ services:
       - "/var/log/pterodactyl:/var/log/pterodactyl"
       - "/tmp/pterodactyl:/tmp/pterodactyl"
     networks:
-      - traefik
+      - traefik_net
+      - wings_net
+    ports:
+      - ${WINGS_SFTP_PORT}:2022
     environment:
       TZ: "${WINGS_TIMEZONE}"
       WINGS_UID: 988
@@ -30,18 +35,10 @@ services:
       # Https handler
       - "traefik.http.routers.wings-https.rule=Host(`${WINGS_SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.wings-https.entrypoints=https"
-      - "traefik.http.routers.wings-https.middlewares=circuit-breaker"
       - "traefik.http.routers.wings-https.tls=true"
       - "traefik.http.routers.wings-https.tls.certresolver=cloudflare"
 
       - "traefik.http.services.wings.loadbalancer.server.port=8080"
-
-      # SFTP
-
-      - "traefik.tcp.routers.wings_sftp.entrypoints=wings_sftp"
-      - "traefik.tcp.routers.wings_sftp.rule=HostSNI(`*`)"
-
-      - "traefik.tcp.services.wings_sftp.loadbalancer.server.port=2022"
     healthcheck:
       test: ["CMD", "curl", "http://localhost:8080"]
       interval: 30s

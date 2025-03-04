@@ -14,7 +14,12 @@ services:
       - "./services/panel/extensions/:/blueprint_extensions"
       - "panel_app:/app"
     networks:
-      - traefik
+      - traefik_net
+      - panel_net
+      
+      - mysql_net
+      - redis_net
+      - wings_net
     environment:
       APP_URL: "https://${PANEL_SUBDOMAIN}.${DOMAIN}"
       APP_NAME: "${PANEL_APP_NAME}"
@@ -65,7 +70,6 @@ services:
       # Https handler
       - "traefik.http.routers.panel-https.rule=Host(`${PANEL_SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.panel-https.entrypoints=https"
-      - "traefik.http.routers.panel-https.middlewares=circuit-breaker"
       - "traefik.http.routers.panel-https.tls=true"
       - "traefik.http.routers.panel-https.tls.certresolver=cloudflare"
 

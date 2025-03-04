@@ -1,6 +1,51 @@
 networks:
-  traefik:
-    name: traefik 
+  mysql_net:
+    name: mysql_net 
     driver: bridge
     driver_opts:
-      com.docker.network.bridge.name: traefik
+      com.docker.network.bridge.name: mysql_net
+  redis_net:
+    name: redis_net 
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: redis_net
+  traefik_net:
+    name: traefik_net 
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: traefik_net
+  wings_net:
+    name: wings_net 
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: wings_net
+  panel_net:
+    name: panel_net 
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: panel_net
+  portainer_net:
+    name: portainer_net 
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: portainer_net
+  prometheus_net:
+    name: prometheus_net 
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: prometheus_net
+  exporters_net:
+    name: exporters_net 
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: exporters_net
+  grafana_net:
+    name: grafana_net 
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: grafana_net
+  public_net:
+    name: public_net 
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: public_net

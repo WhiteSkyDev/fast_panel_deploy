@@ -11,5 +11,5 @@ docker compose \
     -f services/prometheus/docker-compose.yml \
     -f services/grafana/docker-compose.yml \
     -f services/watchtower/docker-compose.yml \ 
-    down
+    stop
     

@@ -6,13 +6,12 @@ services:
     volumes:
       - ./services/redis/data:/data
     networks:
-      - traefik
+      - redis_net
+      - public_net
+    ports:
+      - 127.0.0.1:6379:6379
     labels:
-      - "traefik.enable=true"  
-
-      - "traefik.tcp.routers.redis.entrypoints=redis"
-      - "traefik.tcp.routers.redis.rule=HostSNI(`*`)"
-      - "traefik.tcp.services.redis.loadbalancer.server.port=6379"
+      - "traefik.enable=false"  
     entrypoint: redis-server --requirepass ${REDIS_PASSWORD}   
     healthcheck:
       test: ["CMD-SHELL", "redis-cli", "ping", "||" , "1"]

@@ -8,18 +8,17 @@ services:
     volumes:
       - ./services/mysql/data:/var/lib/mysql
     networks:
-      - traefik
+      - mysql_net
+      - public_net
+    ports:
+      - 127.0.0.1:3306:3306
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
       - PANEL_MYSQL_PASSWORD=${PANEL_MYSQL_PASSWORD}
       - EXPORTER_MYSQL_PASSWORD=${EXPORTER_MYSQL_PASSWORD}
       - GRAFANA_MYSQL_PASSWORD=${GRAFANA_MYSQL_PASSWORD}
     labels:
-      - "traefik.enable=true"
-
-      - "traefik.tcp.routers.mysql.entrypoints=mysql"
-      - "traefik.tcp.routers.mysql.rule=HostSNI(`*`)"
-      - "traefik.tcp.services.mysql.loadbalancer.server.port=3306"
+      - "traefik.enable=false"
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -u root -h localhost --password=$$MYSQL_PASSWORD || exit 1"]
       interval: 30s

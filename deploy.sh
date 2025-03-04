@@ -82,7 +82,7 @@ install_docker() {
     fi
 
     echo "deb [arch=$(dpkg --print-architecture) signed-by=$keyring_path] $REPO $VERSION_CODENAME stable" | \
-        sudo tee /etc/apt/sources.list.d/docker.list >/dev/null || {
+        sudo tee /etc/apt/sources.list.d/docker.list >/dev/null 2>&1 || {
         log_error "failed to add docker repository!"
         exit 1
     }
@@ -133,6 +133,7 @@ main() {
 
     chmod +x up.sh
     chmod +x down.sh
+    chmod +x stop.sh
     chmod +x build.sh
 
     ./up.sh

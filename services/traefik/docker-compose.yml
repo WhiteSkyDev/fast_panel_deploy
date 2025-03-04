@@ -8,31 +8,29 @@ services:
       - "./services/traefik/lets_encrypt:/lets_encrypt"
       - "./services/traefik/logs:/logs"
     networks:
-      - traefik
+      - traefik_net
+      - public_net
+
+      - exporters_net # Traefik prometheus exporter
     ports:
       - "80:80"                                  # HTTP
       - "443:443"                                # HTTPS
-      - "3306:3306"                              # MySQL
-      - "6379:6379"                              # Redis
-      - "${WINGS_SFTP_PORT}:${WINGS_SFTP_PORT}"
     environment:
       - CF_DNS_API_TOKEN=${CLOUDFLARE_API_KEY}
       - TZ=${TRAEFIK_TIMEZONE}
     labels:
-      - "traefik.http.middlewares.circuit-breaker.circuitbreaker.expression=NetworkErrorRatio() > 0.10 || ResponseCodeRatio(500, 599, 0, 599) > 0.20 || LatencyAtQuantileMS(90.0) > 300"
-
       - "traefik.http.middlewares.redirect-play-subdomain-middleware.redirectregex.regex=^https://${PLAY_SUBDOMAIN}.${DOMAIN}/(.*)"
       - "traefik.http.middlewares.redirect-play-subdomain-middleware.redirectregex.replacement=https://${DOMAIN}/"
       - "traefik.http.middlewares.redirect-play-subdomain-middleware.redirectregex.permanent=true"
-  
+
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
-  
+
       # Redirect http to https (redirect play subdomain)
       - "traefik.http.routers.redirect-play-subdomain-http.rule=Host(`${PLAY_SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.redirect-play-subdomain-http.entrypoints=http"
       - "traefik.http.routers.redirect-play-subdomain-http.middlewares=redirect-to-https"
-      # Https handler
+      # Https handler (redirect play subdomain)
       - "traefik.http.routers.redirect-play-subdomain-https.rule=Host(`${PLAY_SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.redirect-play-subdomain-https.entrypoints=https"
       - "traefik.http.routers.redirect-play-subdomain-https.middlewares=redirect-play-subdomain-middleware"
@@ -42,10 +40,7 @@ services:
     command:
       - "--entrypoints.http.address=:80"           # HTTP
       - "--entrypoints.https.address=:443"         # HTTPS
-      - "--entrypoints.mysql.address=:3306"        # MySQL
-      - "--entrypoints.redis.address=:6379"        # Redis
       - "--entrypoints.prometheus.address=:9103"   # Prometheus
-      - "--entrypoints.wings_sftp.address=:${WINGS_SFTP_PORT}"
 
       - "--providers.docker=true"
 
@@ -73,4 +68,5 @@ services:
 
       - "--experimental.plugins.cloudflarewarp.modulename=github.com/BetterCorp/cloudflarewarp"
       - "--experimental.plugins.cloudflarewarp.version=v1.3.3"
-      
+
+      - "--providers.docker.network=traefik_net"

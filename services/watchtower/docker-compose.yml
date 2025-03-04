@@ -9,4 +9,3 @@ services:
     labels:
       - "traefik.enable=false"
     command: --interval ${WATCHTOWER_DELAY}
-    

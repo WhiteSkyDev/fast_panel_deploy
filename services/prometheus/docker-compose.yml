@@ -10,7 +10,8 @@ services:
     volumes:
       - ./services/prometheus/data/config.yml:/etc/prometheus/prometheus.yml
     networks:
-      - traefik
+      - prometheus_net
+      - exporters_net
     labels:
       - "traefik.enable=false"
     command:
@@ -29,7 +30,8 @@ services:
     depends_on:
       - mysql
     networks:
-      - traefik
+      - exporters_net
+      - mysql_net
     labels:
       - "traefik.enable=false"
     command:
@@ -51,7 +53,8 @@ services:
     depends_on:
       - redis    
     networks:
-      - traefik
+      - exporters_net
+      - redis_net
     environment:
       - HEALTHCHECK_PORT=9121
       - HEALTHCHECK_PATH=/metrics
@@ -65,10 +68,10 @@ services:
     image: quay.io/prometheus/node-exporter:latest
     container_name: node_exporter
     restart: unless-stopped
-    #volumes:
-    #  - '/:/host:ro,rslave'
+    volumes:
+      - '/:/host:ro,rslave'
     networks:
-      - traefik
+      - exporters_net
     labels:
       - "traefik.enable=false"
     command:

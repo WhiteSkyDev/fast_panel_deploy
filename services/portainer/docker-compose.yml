@@ -9,7 +9,8 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "./services/portainer/data:/data"
     networks:
-      - traefik
+      - traefik_net
+      - portainer_net
     environment:
       - HEALTHCHECK_PORT=9000
     labels:
@@ -22,7 +23,6 @@ services:
       # Https handler
       - "traefik.http.routers.portainer-https.rule=Host(`${PORTAINER_SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.portainer-https.entrypoints=https"
-      - "traefik.http.routers.portainer-https.middlewares=circuit-breaker"
       - "traefik.http.routers.portainer-https.tls=true"
       - "traefik.http.routers.portainer-https.tls.certresolver=cloudflare"
 
